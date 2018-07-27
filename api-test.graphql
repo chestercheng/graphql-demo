@@ -1,0 +1,14 @@
+query {
+    post(id: 1) {
+        text
+        author {
+            name
+        }
+        comments {
+            text
+            author {
+                name
+            }
+        }
+    }
+}
