@@ -60,6 +60,7 @@ class AddComment(Mutation):
             id=max([i for i in comments.keys()]) + 1,
             author=author,
             text=text)
+        comments[cmt.id] = cmt
 
         post = posts[post_id]
         post.comments.append(cmt)
