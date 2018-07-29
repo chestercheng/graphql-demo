@@ -1,0 +1,11 @@
+mutation {
+    addComment(authorId: 46, postId: 1, text: ":)") {
+        ok
+        comment {
+            author {
+                name
+            }
+            text
+        }
+    }
+}

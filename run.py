@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from graphene import ObjectType, ID, Int, List, String, Field, Schema
+from graphene import (
+    Boolean, Field, ID, Int, List, Mutation, ObjectType, Schema, String)
 from graphql.execution.executors.asyncio import AsyncioExecutor
 from sanic import Sanic
 from sanic_graphql import GraphQLView
@@ -42,7 +43,31 @@ class Post(ObjectType):
     comments = List(Comment)
 
 
-class Query(ObjectType):
+class AddComment(Mutation):
+
+    class Arguments:
+
+        post_id = Int()
+        author_id = Int()
+        text = String()
+
+    ok = Boolean()
+    comment = Field(Comment)
+
+    def mutate(self, info, post_id, author_id, text):
+        author = authors[author_id]
+        cmt = Comment(
+            id=max([i for i in comments.keys()]) + 1,
+            author=author,
+            text=text)
+
+        post = posts[post_id]
+        post.comments.append(cmt)
+
+        return AddComment(ok=True, comment=cmt)
+
+
+class MyRootQuery(ObjectType):
 
     newsfeed = List(Post)
     post = Field(Post, id=Int())
@@ -50,8 +75,13 @@ class Query(ObjectType):
     def resolve_newsfeed(self, info):
         return posts.values()
 
-    def resolve_post(self, info, id=None):
+    def resolve_post(self, info, id):
         return posts.get(id, None)
+
+
+class MyRootMutation(ObjectType):
+
+    add_comment = AddComment.Field()
 
 
 @app.listener("before_server_start")
@@ -80,7 +110,7 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     graphql_view = GraphQLView.as_view(
-        schema=Schema(query=Query),
+        schema=Schema(query=MyRootQuery, mutation=MyRootMutation),
         executor=AsyncioExecutor(loop=loop))
     app.add_route(graphql_view, "/graphql", methods=["POST"])
 
